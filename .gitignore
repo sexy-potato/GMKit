@@ -1,0 +1,7 @@
+/*
+!.gitignore
+!config.m4
+!php_gmkit.h
+!README.md
+!gmkit.php
+!*.c
