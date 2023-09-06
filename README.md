@@ -27,7 +27,7 @@ SM2Signature {
 
   - `R` is an value based-on x-coordinate of random point
 
-  - `R` is signature proof
+  - `S` is signature proof
 
 ```
 SM2PublicKey (byte[], byte[]) // Tuple
@@ -48,9 +48,11 @@ SM2Key {
 
 __Signer defaults to `1234567812345678`__
 
+- `gmkit_xor(X byte[], Y byte[]) byte[]`
+
 - `gmkit_sm2_verify(P SM2PublicKey, message byte[], signature SM2Signature, signer? string) boolean`
 
-- `gmkit_sm2_sign(d byte[], message byte[], signer? string) SM2Signature`
+- `gmkit_sm2_sign(dP SM2Key, message byte[], signer? string) SM2Signature`
 
 - `gmkit_sm2_encrypt(P SM2PublicKey, message byte[]) SM2Cipher`
 
@@ -58,8 +60,6 @@ __Signer defaults to `1234567812345678`__
 
 - `gmkit_sm2_key() SM2Key` 
 
-
-
-
+- `gmkit_sm4(key byte[], message byte[]) byte[]` 
 
 

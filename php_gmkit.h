@@ -1,10 +1,7 @@
 #ifndef PHP_GMKIT_H
 
-  #define GMKIT_SM4_ERROR 2000
-  #define GMKIT_SM2_INVALID_BIG_NUMBER 1001
-  #define GMKIT_SM2_INVALID_POINT 1002
-  #define GMKIT_SM2_DECRYPTION_OR_ENCRYPTION_ERROR 1003
-  #define GMKIT_SM2_SIGNATURE_ERROR 1004
+  #define GMKIT_SM2_SIGNATURE_ERROR 1002
+  #define GMKIT_SM2_DECRYPTION_OR_ENCRYPTION_ERROR 1001
   #define GMKIT_SM2_ERROR 1000
 
   /*
@@ -16,7 +13,7 @@
    */
   #define HANDLE_BIG_NUMBER_PROBABLY(zval, raw, message) \
     if (zval != NULL && Z_TYPE_P(zval) == IS_STRING) { HANDLE_BIG_NUMBER(Z_STR_P(zval), raw, message); } else { \
-      zend_throw_exception(exception, message, GMKIT_SM2_INVALID_BIG_NUMBER); \
+      zend_throw_exception(spl_ce_InvalidArgumentException, message, 0); \
       RETURN_THROWS(); \
     }
 
@@ -24,7 +21,7 @@
     if (ZSTR_LEN(zstr) == 32) { \
       memcpy(raw, ZSTR_VAL(zstr), 32); \
     } else { \
-      zend_throw_exception(exception, message, GMKIT_SM2_INVALID_BIG_NUMBER); \
+      zend_throw_exception(spl_ce_InvalidArgumentException, message, 0); \
       RETURN_THROWS(); \
     }
 

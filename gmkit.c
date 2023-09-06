@@ -5,6 +5,7 @@
 #endif
 
 #include "zend_exceptions.h"
+#include "ext/spl/spl_exceptions.h"
 #include "php_gmkit.h"
 
 #include <gmssl/sm2.h>
@@ -26,11 +27,8 @@ PHP_MINIT_FUNCTION(gmkit) {
 
   exception = zend_register_internal_class_ex(&ce, zend_ce_exception);
 
-  zend_declare_class_constant_long(exception, "CODE_SM4_ERROR", 14, GMKIT_SM4_ERROR);
-  zend_declare_class_constant_long(exception, "CODE_SM2_INVALID_BIG_NUMBER", 27, GMKIT_SM2_INVALID_BIG_NUMBER);
-  zend_declare_class_constant_long(exception, "CODE_SM2_INVALID_POINT", 22, GMKIT_SM2_INVALID_POINT);
-  zend_declare_class_constant_long(exception, "CODE_SM2_DECRYPTION_OR_ENCRYPTION_ERROR", 39, GMKIT_SM2_DECRYPTION_OR_ENCRYPTION_ERROR);
   zend_declare_class_constant_long(exception, "CODE_SM2_SIGNATURE_ERROR", 24, GMKIT_SM2_SIGNATURE_ERROR);
+  zend_declare_class_constant_long(exception, "CODE_SM2_DECRYPTION_OR_ENCRYPTION_ERROR", 39, GMKIT_SM2_DECRYPTION_OR_ENCRYPTION_ERROR);
   zend_declare_class_constant_long(exception, "CODE_SM2_ERROR", 14, GMKIT_SM2_ERROR);
 
   return SUCCESS;
@@ -44,6 +42,30 @@ PHP_RINIT_FUNCTION(gmkit) {
   #endif
 
   return SUCCESS;
+}
+
+PHP_FUNCTION(gmkit_xor) {
+
+  size_t a, b;
+
+  char *X;
+  char *Y;
+
+  ZEND_PARSE_PARAMETERS_START_EX(ZEND_PARSE_PARAMS_THROW, 2, 2)
+    Z_PARAM_STRING(X, a)
+    Z_PARAM_STRING(Y, b)
+  ZEND_PARSE_PARAMETERS_END();
+
+  if (a != b) {
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid value for bitwize XOR operation", 0);
+    RETURN_THROWS();
+  }
+
+  for (size_t i = 0; i < a; i++) {
+    X[i] ^= Y[i];
+  }
+
+  RETVAL_STRING(X);
 }
 
 PHP_FUNCTION(gmkit_sm2_verify) {
@@ -65,7 +87,7 @@ PHP_FUNCTION(gmkit_sm2_verify) {
   SM2_KEY dP;
 
   HANDLE_BIG_NUMBER_PROBABLY(zend_hash_str_find(_signature, "R", 1), signature.r, "Invalid R property of signature");
-  HANDLE_BIG_NUMBER_PROBABLY(zend_hash_str_find(_signature, "S", 1), signature.s, "Invalid R property of signature");
+  HANDLE_BIG_NUMBER_PROBABLY(zend_hash_str_find(_signature, "S", 1), signature.s, "Invalid S property of signature");
 
   HANDLE_BIG_NUMBER_PROBABLY(zend_hash_index_find(P, 0), dP.public_key.x, "Invalid x-coordinate of P.");
   HANDLE_BIG_NUMBER_PROBABLY(zend_hash_index_find(P, 1), dP.public_key.y, "Invalid y-coordinate of P.");
@@ -120,7 +142,7 @@ PHP_FUNCTION(gmkit_sm2_sign) {
   HANDLE_BIG_NUMBER_PROBABLY(d, dP.private_key, "Invalid d property");
 
   if (P == NULL || Z_TYPE_P(P) != IS_ARRAY) {
-    zend_throw_exception(exception, "Invalid P property, it must be 2-tuple of bytes (such as: [\"x\",\"y\"]).", GMKIT_SM2_ERROR);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid P property, it must be 2-tuple of bytes (such as: [\"x\",\"y\"]).", 0);
     goto CLEAN;
   }
 
@@ -210,7 +232,7 @@ PHP_FUNCTION(gmkit_sm2_decrypt) {
   ZEND_PARSE_PARAMETERS_END();
 
   if (s != 32) {
-    zend_throw_exception(exception, "Invalid d value", GMKIT_SM2_INVALID_BIG_NUMBER);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid d value", 0);
     RETURN_THROWS();
   }
 
@@ -225,7 +247,7 @@ PHP_FUNCTION(gmkit_sm2_decrypt) {
   zval* C3 = zend_hash_str_find(_chiper, "C3", 2);
 
   if (!C2 || Z_TYPE_P(C2) != IS_STRING || ZSTR_LEN(Z_STR_P(C2)) == 0 || ZSTR_LEN(Z_STR_P(C2)) > SM2_MAX_PLAINTEXT_SIZE) {
-    zend_throw_exception(exception, "Invalid C2 value", GMKIT_SM2_ERROR);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid C2 value", 0);
     goto CLEAN;
   }
 
@@ -235,7 +257,7 @@ PHP_FUNCTION(gmkit_sm2_decrypt) {
     HANDLE_BIG_NUMBER_PROBABLY(zend_hash_index_find(Z_ARR_P(C1), 0), cipher.point.x, "Invalid x-coordinate of C1.");
     HANDLE_BIG_NUMBER_PROBABLY(zend_hash_index_find(Z_ARR_P(C1), 1), cipher.point.y, "Invalid y-coordinate of C1.");
   } else {
-    zend_throw_exception(exception, "Invalid C1 value", GMKIT_SM2_INVALID_POINT);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid C1 value", 0);
     goto CLEAN;
   }
 
@@ -295,12 +317,12 @@ PHP_FUNCTION(gmkit_sm4) {
   ZEND_PARSE_PARAMETERS_END();
 
   if (x != SM4_KEY_SIZE) {
-    zend_throw_exception(exception, "Invalid SM4 cryptography key (encipher/decipher)", GMKIT_SM4_ERROR);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid SM4 cryptography key (encipher/decipher)", 0);
     RETURN_THROWS();
   }
 
   if (x != y) {
-    zend_throw_exception(exception, "Invalid SM4 block", GMKIT_SM4_ERROR);
+    zend_throw_exception(spl_ce_InvalidArgumentException, "Invalid SM4 block", 0);
     RETURN_THROWS();
   }
 
@@ -315,44 +337,50 @@ PHP_FUNCTION(gmkit_sm4) {
   WRITE_0(key)
 }
 
-ZEND_BEGIN_ARG_INFO(gmkit_sm2_key_arguments, 0)
+ZEND_BEGIN_ARG_INFO(_gmkit_xor, {})
+  ZEND_ARG_INFO(0, X)
+  ZEND_ARG_INFO(0, Y)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO_EX(gmkit_sm2_verify_arguments, {}, ZEND_RETURN_VALUE, 3)
+ZEND_BEGIN_ARG_INFO(_gmkit_sm2_key, {})
+ZEND_END_ARG_INFO();
+
+ZEND_BEGIN_ARG_INFO_EX(_gmkit_sm2_verify, {}, ZEND_RETURN_VALUE, 3)
   ZEND_ARG_INFO(0, P)
   ZEND_ARG_INFO(0, signature)
   ZEND_ARG_INFO(0, message)
   ZEND_ARG_INFO(0, signer)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO_EX(gmkit_sm2_sign_arguments, {}, ZEND_RETURN_VALUE, 2)
+ZEND_BEGIN_ARG_INFO_EX(_gmkit_sm2_sign, {}, ZEND_RETURN_VALUE, 2)
   ZEND_ARG_INFO(0, dP)
   ZEND_ARG_INFO(0, message)
   ZEND_ARG_INFO(0, signer)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO(gmkit_sm2_encrypt_arguments, {})
+ZEND_BEGIN_ARG_INFO(_gmkit_sm2_encrypt, {})
   ZEND_ARG_INFO(0, P)
   ZEND_ARG_INFO(0, message)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO(gmkit_sm2_decrypt_arguments, {})
+ZEND_BEGIN_ARG_INFO(_gmkit_sm2_decrypt, {})
   ZEND_ARG_INFO(0, d)
   ZEND_ARG_INFO(0, cipher)
 ZEND_END_ARG_INFO();
 
-ZEND_BEGIN_ARG_INFO(gmkit_sm4_arguments, {})
+ZEND_BEGIN_ARG_INFO(_gmkit_sm4, {})
   ZEND_ARG_INFO(0, key)
   ZEND_ARG_INFO(0, block)
 ZEND_END_ARG_INFO();
 
 static const zend_function_entry exports[] = {
-  PHP_FE(gmkit_sm2_key, gmkit_sm2_key_arguments)
-  PHP_FE(gmkit_sm2_encrypt, gmkit_sm2_encrypt_arguments)
-  PHP_FE(gmkit_sm2_decrypt, gmkit_sm2_decrypt_arguments)
-  PHP_FE(gmkit_sm2_sign, gmkit_sm2_sign_arguments)
-  PHP_FE(gmkit_sm2_verify, gmkit_sm2_verify_arguments)
-  PHP_FE(gmkit_sm4, gmkit_sm4_arguments)
+  PHP_FE(gmkit_xor, _gmkit_xor)
+  PHP_FE(gmkit_sm2_encrypt, _gmkit_sm2_encrypt)
+  PHP_FE(gmkit_sm2_decrypt, _gmkit_sm2_decrypt)
+  PHP_FE(gmkit_sm2_sign, _gmkit_sm2_sign)
+  PHP_FE(gmkit_sm2_verify, _gmkit_sm2_verify)
+  PHP_FE(gmkit_sm2_key, _gmkit_sm2_key)
+  PHP_FE(gmkit_sm4, _gmkit_sm4)
   PHP_FE_END
 };
 
