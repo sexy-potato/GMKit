@@ -8,13 +8,11 @@ SM2Cipher {
 }
 ```
 
-`SM2Cipher` represents ciphert context
+`SM2Cipher` represents cipher context
 
-  - `C1` is Generator adds itself by `k` times (`[k]G`)
-
-  - `C2` is CipherText
-
-  - `C3` is Hash
+- `C1` is Generator adds itself by `k` times (`[k]G`)
+- `C2` is CipherText
+- `C3` is Hash
 
 ```
 SM2Signature {
@@ -25,9 +23,8 @@ SM2Signature {
 
 `SM2Signature` isn't message digest, it represents an random point with a proof
 
-  - `R` is an value based-on x-coordinate of random point
-
-  - `S` is signature proof
+- `R` is an value based-on x-coordinate of random point
+- `S` is signature proof
 
 ```
 SM2PublicKey (byte[], byte[]) // Tuple
@@ -49,17 +46,11 @@ SM2Key {
 __Signer defaults to `1234567812345678`__
 
 - `gmkit_xor(X byte[], Y byte[]) byte[]`
-
 - `gmkit_sm2_verify(P SM2PublicKey, message byte[], signature SM2Signature, signer? string) boolean`
-
 - `gmkit_sm2_sign(dP SM2Key, message byte[], signer? string) SM2Signature`
-
 - `gmkit_sm2_encrypt(P SM2PublicKey, message byte[]) SM2Cipher`
-
 - `gmkit_sm2_decrypt(d byte[], cipher SM2Cipher) byte[]`
-
 - `gmkit_sm2_key() SM2Key` 
-
 - `gmkit_sm4(key byte[], message byte[]) byte[]` 
 
 
