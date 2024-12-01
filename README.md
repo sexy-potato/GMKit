@@ -2,7 +2,7 @@
 
 ```
 SM2Cipher {
-  C1 ( byte[], byte[] ), // Tuple
+  C1 { byte[], byte[] }, // Tuple
   C2 byte[],
   C3 byte[],
 }
@@ -11,8 +11,8 @@ SM2Cipher {
 `SM2Cipher` represents cipher context
 
 - `C1` is Generator adds itself by `k` times (`[k]G`)
-- `C2` is CipherText
-- `C3` is Hash
+- `C2` is cipher text
+- `C3` is hash
 
 ```
 SM2Signature {
@@ -21,13 +21,13 @@ SM2Signature {
 }
 ```
 
-`SM2Signature` isn't message digest, it represents an random point with a proof
+`SM2Signature` is a tuple and not message digest, it represents an random point with a proof
 
 - `R` is an value based-on x-coordinate of random point
 - `S` is signature proof
 
 ```
-SM2PublicKey (byte[], byte[]) // Tuple
+SM2PublicKey { byte[], byte[] }
 ```
 
 SM2 is one of elliptic curve cryptography, so it's public key can represent in compression (starts with `0x02` or `0x03`) or not (starts with `0x04`), you must decompress it before use if necessary.
